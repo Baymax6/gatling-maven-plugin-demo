@@ -1,4 +1,4 @@
-package com.offcn.pressure
+package computerdatabase
 
 import io.gatling.core.Predef._
 import io.gatling.core.scenario.Simulation
@@ -30,7 +30,12 @@ class MallSimulation extends Simulation {
       .headers(headers_json)
       .header("Authorization", "eyJhbGciOiJIUzUxMiJ9.eyJjcmVhdGVfdGltZSI6MTU2NzQyNjEwMzgwNSwidXNlck5hbWUiOiLlvpDkuJbnkKYiLCJleHAiOjE1Njc1MTI1MDMsInVzZXJJZCI6InhzcTcxNjQ0In0.MM7sHl85lT3Y6WBYR9AqPmpRXF7C5I1EYYFWxcJoo4naUzyTxhCdwisupSadrLGsyMDhz-YwrBwgsZtPnrc6Zw")
       .body(StringBody("""{ "buynum": 1,"smscode": "1","goodsId": "${goodsId}","willCost": "${init_point}","willStep":1,"userinfo":{"openid": "${openid}","userName": "${user_name}","tel": "${tel}","userMail": "${user_mail}","address": "${address}","addressDetail": "${address_detail}","addressJson": "${address_json}"}}""")).asJson
-      .check(status.is(200)))
+      .check(jsonPath("$.code").saveAs("code"))).exec {
+    session =>
+      val res = session("code").as[String]
+      println("返回码：" + res)
+      session
+  }
   //    .exec(http("pre-order")
   //      .get("/mall/app/order/preCheck?openid=${openid}&goodsId=${id}")
   //      .check(jsonPath("$.code").saveAs("code")))
@@ -46,6 +51,6 @@ class MallSimulation extends Simulation {
   //    }
 
   setUp(
-    gold.inject(rampUsers(20) during (10 seconds)).throttle()
+    gold.inject(rampUsers(200) during (10 seconds)).throttle(reachRps(300) in (20 seconds), holdFor(5 minutes)).protocols(httpConf)
   )
 }
